@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -36,4 +37,47 @@ func getFirstParagraphFromHTML(html string) string {
 		return p.Text()
 	}
 	return ""
+}
+
+// getURLsFromHTML extracts all URLs from <a href> tags, converting relative URLs to absolute.
+func getURLsFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlBody))
+	if err != nil {
+		return nil, err
+	}
+	var urls []string
+	doc.Find("a[href]").Each(func(_ int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if !exists {
+			return
+		}
+		u, err := url.Parse(href)
+		if err != nil {
+			return
+		}
+		abs := baseURL.ResolveReference(u)
+		urls = append(urls, abs.String())
+	})
+	return urls, nil
+}
+
+func getImagesFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlBody))
+	if err != nil {
+		return nil, err
+	}
+	var urls []string
+	doc.Find("img[src]").Each(func(_ int, s *goquery.Selection) {
+		src, exists := s.Attr("src")
+		if !exists {
+			return
+		}
+		u, err := url.Parse(src)
+		if err != nil {
+			return
+		}
+		abs := baseURL.ResolveReference(u)
+		urls = append(urls, abs.String())
+	})
+	return urls, nil
 }
