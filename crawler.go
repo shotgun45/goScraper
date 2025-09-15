@@ -3,55 +3,75 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"sync"
 )
 
+type config struct {
+	pages              map[string]PageData
+	baseURL            *url.URL
+	mu                 *sync.Mutex
+	concurrencyControl chan struct{}
+	wg                 *sync.WaitGroup
+}
+
 // crawlPage recursively crawls a website, tracking internal links in the pages map.
-func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
-	// Parse base and current URLs
-	baseParsed, err := url.Parse(rawBaseURL)
-	if err != nil {
-		fmt.Printf("Invalid base URL: %s\n", rawBaseURL)
-		return
-	}
-	currentParsed, err := url.Parse(rawCurrentURL)
-	if err != nil {
-		fmt.Printf("Invalid current URL: %s\n", rawCurrentURL)
-		return
-	}
+func (cfg *config) crawlPage(rawCurrentURL string) {
+	cfg.wg.Add(1)
+	go func() {
+		cfg.concurrencyControl <- struct{}{} // Acquire concurrency slot at goroutine start
+		defer func() {
+			<-cfg.concurrencyControl // Release slot
+			cfg.wg.Done()
+		}()
 
-	// Only crawl URLs on the same domain
-	if baseParsed.Hostname() != currentParsed.Hostname() {
-		return
+		currentParsed, err := url.Parse(rawCurrentURL)
+		if err != nil {
+			fmt.Printf("Invalid current URL: %s\n", rawCurrentURL)
+			return
+		}
+
+		// Only crawl URLs on the same domain
+		if cfg.baseURL.Hostname() != currentParsed.Hostname() {
+			return
+		}
+
+		// Normalize current URL
+		normalized := normalizeURL(rawCurrentURL)
+
+		// Use addPageVisit helper
+		isFirst := cfg.addPageVisit(normalized)
+		if !isFirst {
+			return
+		}
+
+		fmt.Printf("Crawling: %s\n", rawCurrentURL)
+
+		html, err := getHTML(rawCurrentURL)
+		if err != nil {
+			fmt.Printf("Error fetching %s: %v\n", rawCurrentURL, err)
+			return
+		}
+
+		// Get all URLs from the page
+		urls, err := getURLsFromHTML(html, currentParsed)
+		if err != nil {
+			fmt.Printf("Error extracting URLs from %s: %v\n", rawCurrentURL, err)
+			return
+		}
+
+		for _, u := range urls {
+			cfg.crawlPage(u)
+		}
+	}()
+}
+
+// addPageVisit checks if the page has been visited, adds it if not, and returns true if it's the first visit.
+func (cfg *config) addPageVisit(url string) bool {
+	cfg.mu.Lock()
+	defer cfg.mu.Unlock()
+	if _, exists := cfg.pages[url]; exists {
+		return false
 	}
-
-	// Normalize current URL
-	normalized := normalizeURL(rawCurrentURL)
-
-	// If already crawled, increment count and return
-	if count, exists := pages[normalized]; exists {
-		pages[normalized] = count + 1
-		return
-	}
-	// Mark as crawled
-	pages[normalized] = 1
-
-	fmt.Printf("Crawling: %s\n", rawCurrentURL)
-
-	html, err := getHTML(rawCurrentURL)
-	if err != nil {
-		fmt.Printf("Error fetching %s: %v\n", rawCurrentURL, err)
-		return
-	}
-
-	// Get all URLs from the page
-	urls, err := getURLsFromHTML(html, currentParsed)
-	if err != nil {
-		fmt.Printf("Error extracting URLs from %s: %v\n", rawCurrentURL, err)
-		return
-	}
-
-	// Recursively crawl each found URL
-	for _, u := range urls {
-		crawlPage(rawBaseURL, u, pages)
-	}
+	cfg.pages[url] = PageData{}
+	return true
 }
