@@ -81,3 +81,30 @@ func getImagesFromHTML(htmlBody string, baseURL *url.URL) ([]string, error) {
 	})
 	return urls, nil
 }
+
+type PageData struct {
+	URL            string
+	H1             string
+	FirstParagraph string
+	OutgoingLinks  []string
+	ImageURLs      []string
+}
+
+func extractPageData(html, pageURL string) PageData {
+	h1 := getH1FromHTML(html)
+	firstParagraph := getFirstParagraphFromHTML(html)
+	baseURL, err := url.Parse(pageURL)
+	var outgoingLinks []string
+	var imageURLs []string
+	if err == nil {
+		outgoingLinks, _ = getURLsFromHTML(html, baseURL)
+		imageURLs, _ = getImagesFromHTML(html, baseURL)
+	}
+	return PageData{
+		URL:            pageURL,
+		H1:             h1,
+		FirstParagraph: firstParagraph,
+		OutgoingLinks:  outgoingLinks,
+		ImageURLs:      imageURLs,
+	}
+}
