@@ -12,10 +12,18 @@ type config struct {
 	mu                 *sync.Mutex
 	concurrencyControl chan struct{}
 	wg                 *sync.WaitGroup
+	maxPages           int
 }
 
 // crawlPage recursively crawls a website, tracking internal links in the pages map.
 func (cfg *config) crawlPage(rawCurrentURL string) {
+	cfg.mu.Lock()
+	if len(cfg.pages) >= cfg.maxPages {
+		cfg.mu.Unlock()
+		return
+	}
+	cfg.mu.Unlock()
+
 	cfg.wg.Add(1)
 	go func() {
 		cfg.concurrencyControl <- struct{}{} // Acquire concurrency slot at goroutine start

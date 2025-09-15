@@ -13,11 +13,21 @@ func main() {
 		fmt.Println("no website provided")
 		os.Exit(1)
 	}
-	if len(args) > 1 {
-		fmt.Println("too many arguments provided")
-		os.Exit(1)
-	}
+
+	// Defaults
+	maxConcurrency := 5
+	maxPages := 100
+
 	baseURL := args[0]
+	// Optional: --maxConcurrency=N --maxPages=M
+	for _, arg := range args[1:] {
+		if len(arg) > 17 && arg[:17] == "--maxConcurrency=" {
+			fmt.Sscanf(arg, "--maxConcurrency=%d", &maxConcurrency)
+		} else if len(arg) > 10 && arg[:10] == "--maxPages=" {
+			fmt.Sscanf(arg, "--maxPages=%d", &maxPages)
+		}
+	}
+
 	fmt.Printf("starting crawl of: %s\n", baseURL)
 
 	parsedBase, err := url.Parse(baseURL)
@@ -29,8 +39,9 @@ func main() {
 		pages:              make(map[string]PageData),
 		baseURL:            parsedBase,
 		mu:                 &sync.Mutex{},
-		concurrencyControl: make(chan struct{}, 5),
+		concurrencyControl: make(chan struct{}, maxConcurrency),
 		wg:                 &sync.WaitGroup{},
+		maxPages:           maxPages,
 	}
 
 	cfg.crawlPage(baseURL)
