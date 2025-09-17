@@ -1,11 +1,1 @@
 API server running on http://localhost:8080 ...
-Crawling: http://crawler-test.com
-Crawling: http://crawler-test.com/mobile/desktop_with_AMP_as_mobile
-Crawling: http://crawler-test.com/mobile/separate_desktop
-Crawling: http://crawler-test.com/mobile/other_desktop_that_links_to_the_same_mobile_pages
-Crawling: http://crawler-test.com/description_tags/description_with_whitespace
-Crawling: http://crawler-test.com/mobile/separate_desktop_with_different_h1
-Crawling: http://crawler-test.com/mobile/separate_desktop_with_different_title
-Crawling: http://crawler-test.com/mobile/separate_desktop_with_different_wordcount
-Crawling: http://crawler-test.com/mobile/separate_desktop_with_different_links_in
-Crawling: http://crawler-test.com/mobile/separate_desktop_with_different_links_out
