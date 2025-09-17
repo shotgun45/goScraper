@@ -10,12 +10,13 @@ import (
 
 func main() {
 	args := os.Args[1:]
-	if len(args) < 1 {
-		fmt.Println("no website provided")
-		os.Exit(1)
+	if len(args) == 0 {
+		// No arguments: start API server for frontend
+		StartAPIServer()
+		return
 	}
 
-	// Defaults
+	// CLI mode (as before)
 	maxConcurrency := 5
 	maxPages := 100
 

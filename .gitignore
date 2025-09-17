@@ -36,3 +36,6 @@ crawler
 
 #Ignore the report file
 report.csv
+
+#Ignore node_modules
+node_modules
