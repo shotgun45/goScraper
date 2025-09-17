@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"sync"
+	// Import writeCSVReport from csv_report.go (same package)
 )
 
 func main() {
@@ -47,10 +48,10 @@ func main() {
 	cfg.crawlPage(baseURL)
 	cfg.wg.Wait()
 
-	fmt.Println("\nCrawl complete. Pages found:")
-	cfg.mu.Lock()
-	for url := range cfg.pages {
-		fmt.Printf("%s\n", url)
+	// Write CSV report after crawling
+	if err := writeCSVReport(cfg.pages, "report.csv"); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to write CSV report: %v\n", err)
+		os.Exit(1)
 	}
-	cfg.mu.Unlock()
+	fmt.Println("\nCrawl complete. CSV report written to report.csv")
 }

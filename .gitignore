@@ -33,3 +33,6 @@ go.work.sum
 
 # Ignore the crawler binary
 crawler
+
+#Ignore the report file
+report.csv

@@ -60,6 +60,12 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 			return
 		}
 
+		// Extract and store page data
+		pageData := extractPageData(html, rawCurrentURL)
+		cfg.mu.Lock()
+		cfg.pages[normalized] = pageData
+		cfg.mu.Unlock()
+
 		// Get all URLs from the page
 		urls, err := getURLsFromHTML(html, currentParsed)
 		if err != nil {
@@ -80,6 +86,7 @@ func (cfg *config) addPageVisit(url string) bool {
 	if _, exists := cfg.pages[url]; exists {
 		return false
 	}
+	// Only mark as visited, don't store empty PageData here
 	cfg.pages[url] = PageData{}
 	return true
 }
