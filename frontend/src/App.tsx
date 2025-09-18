@@ -1,4 +1,14 @@
 import React, { useState } from 'react';
+// Helper to convert report data to CSV string
+function toCSV(rows: ReportRow[]): string {
+  if (!rows.length) return '';
+  const header = Object.keys(rows[0]);
+  const csvRows = [header.join(',')];
+  for (const row of rows) {
+    csvRows.push(header.map(h => '"' + String(row[h as keyof ReportRow] ?? '').replace(/"/g, '""') + '"').join(','));
+  }
+  return csvRows.join('\n');
+}
 
 interface ReportRow {
   page_url: string;
@@ -9,9 +19,18 @@ interface ReportRow {
 }
 
 const App: React.FC = () => {
-  const [url, setUrl] = useState('');
-  const [maxConcurrency, setMaxConcurrency] = useState(5);
-  const [maxPages, setMaxPages] = useState(25);
+  const DEFAULT_URL = '';
+  const DEFAULT_CONCURRENCY = 5;
+  const DEFAULT_MAX_PAGES = 25;
+  const [url, setUrl] = useState(DEFAULT_URL);
+  const [maxConcurrency, setMaxConcurrency] = useState(DEFAULT_CONCURRENCY);
+  const [maxPages, setMaxPages] = useState(DEFAULT_MAX_PAGES);
+  const handleClear = () => {
+    setUrl(DEFAULT_URL);
+    setMaxConcurrency(DEFAULT_CONCURRENCY);
+    setMaxPages(DEFAULT_MAX_PAGES);
+    if (report.length > 0) setReport([]);
+  };
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<ReportRow[]>([]);
   const [error, setError] = useState('');
@@ -34,6 +53,22 @@ const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Save report as CSV file
+  const handleSave = () => {
+    const csv = toCSV(report);
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'goScraper_report.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   };
 
   return (
@@ -59,12 +94,18 @@ const App: React.FC = () => {
               <label style={{ fontWeight: 500, color: '#2563eb', marginBottom: 6, display: 'block' }}>Max Pages</label>
               <input type="number" min={1} max={1000} value={maxPages} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxPages(Number(e.target.value))} style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #cbd5e1', fontSize: 16, outline: 'none', boxSizing: 'border-box' }} />
             </div>
-            <button type="submit" disabled={loading} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '12px 32px', fontWeight: 600, fontSize: 18, boxShadow: '0 2px 8px #2563eb22', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>{loading ? 'Crawling...' : 'Start Crawl'}</button>
+            <button type="submit" disabled={loading} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '12px 32px', fontWeight: 600, fontSize: 18, boxShadow: '0 2px 8px #2563eb22', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s', marginRight: 12 }}>{loading ? 'Crawling...' : 'Start Crawl'}</button>
+            <button type="button" onClick={handleClear} disabled={loading} style={{ background: '#f3f4f6', color: '#2563eb', border: '1px solid #cbd5e1', borderRadius: 8, padding: '12px 32px', fontWeight: 600, fontSize: 18, boxShadow: '0 2px 8px #2563eb11', cursor: loading ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}>Reset</button>
           </form>
           {error && <div style={{ color: '#dc2626', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 12, marginTop: 18, fontWeight: 500 }}>{error}</div>}
         </div>
         {report.length > 0 && (
           <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px #0002', padding: 24, marginBottom: 32, overflowX: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <button onClick={handleSave} style={{ background: '#22c55e', color: 'white', border: 'none', borderRadius: 8, padding: '10px 28px', fontWeight: 600, fontSize: 16, boxShadow: '0 2px 8px #22c55e22', cursor: 'pointer', transition: 'background 0.2s' }}>
+                Save Report
+              </button>
+            </div>
             <table style={{ borderCollapse: 'collapse', minWidth: 900, width: '100%', fontSize: 15 }}>
               <thead>
                 <tr style={{ background: 'linear-gradient(90deg, #2563eb11 0%, #60a5fa11 100%)' }}>
