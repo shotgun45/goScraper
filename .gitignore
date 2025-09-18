@@ -34,8 +34,17 @@ go.work.sum
 # Ignore the crawler binary
 crawler
 
-#Ignore the report file
+
+# Ignore the report file
 report.csv
+
+# Ignore go_server.log
+go_server.log
 
 #Ignore node_modules
 node_modules
+
+#Ignore logs
+logs
+*.log
+logs/*
