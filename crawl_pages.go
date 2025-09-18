@@ -83,6 +83,9 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 func (cfg *config) addPageVisit(url string) bool {
 	cfg.mu.Lock()
 	defer cfg.mu.Unlock()
+	if len(cfg.pages) >= cfg.maxPages {
+		return false
+	}
 	if _, exists := cfg.pages[url]; exists {
 		return false
 	}
