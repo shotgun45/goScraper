@@ -115,7 +115,7 @@ const App: React.FC = () => {
         {report.length > 0 && (
           <div style={{ background: 'white', borderRadius: 18, boxShadow: '0 4px 24px #0002', padding: 24, marginBottom: 32, overflowX: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-              <button onClick={handleSave} style={{ background: '#22c55e', color: 'white', border: 'none', borderRadius: 8, padding: '10px 28px', fontWeight: 600, fontSize: 16, boxShadow: '0 2px 8px #22c55e22', cursor: 'pointer', transition: 'background 0.2s' }}>
+              <button onClick={handleSave} style={{ background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, padding: '10px 28px', fontWeight: 600, fontSize: 16, boxShadow: '0 2px 8px #22c55e22', cursor: 'pointer', transition: 'background 0.2s' }}>
                 Save Report
               </button>
             </div>
